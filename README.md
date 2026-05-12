@@ -1,57 +1,57 @@
 # Vision Analyzer - Audit K3 Otomatis
 
-Project ini adalah aplikasi web untuk melakukan audit visual Alat Pelindung Diri (APD) K3 secara otomatis menggunakan kecerdasan buatan (AI). Aplikasi ini mengintegrasikan **BytePlus TOS** untuk penyimpanan objek dan **BytePlus Seed LLM** untuk analisis gambar.
+Project ini adalah aplikasi web untuk melakukan audit visual Alat Pelindung Diri (APD) K3 secara otomatis menggunakan kecerdasan buatan (AI). Aplikasi ini mengintegrasikan **BytePlus TOS** untuk penyimpanan objek dan **BytePlus Seed LLM** untuk analisis gambar terstruktur.
 
 ## 🏗️ Struktur Project
 
-Codebase telah dirapihkan menjadi dua bagian utama:
+Codebase ini menggunakan arsitektur terpisah antara frontend (TanStack Start) dan backend (Flask):
 
 ```
 cloud-canvas-talk/
 ├── backend/            # API Flask (Python)
-│   ├── services/       # Integrasi TOS & LLM
-│   ├── test_images/    # Sampel gambar untuk pengujian
+│   ├── services/       # Integrasi TOS & Seed LLM
+│   ├── test_images/    # Sampel gambar untuk pengujian K3
 │   ├── utils/          # Helper fungsi
 │   └── app.py          # Entry point backend
-├── frontend/           # Aplikasi React (Vite + TanStack)
-│   ├── src/            # Source code frontend
-│   └── vite.config.ts  # Konfigurasi proxy ke backend
-└── README.md           # Dokumentasi utama
+├── src/                # Source code Frontend (React + TanStack)
+│   ├── components/     # UI Components (AnalysisResult, Uploader)
+│   ├── hooks/          # Logic (useImageAnalysis)
+│   └── services/       # API Clients (TOS, LLM)
+├── package.json        # Konfigurasi Frontend
+├── vite.config.ts      # Konfigurasi Vite & Proxy
+└── README.md           # Dokumentasi utama ini
 ```
 
 ## 🚀 Cara Menjalankan
 
 ### 1. Persiapan Backend
-Masuk ke direktori backend dan instal dependensi:
+Masuk ke direktori backend, instal dependensi, dan isi `.env`:
 ```bash
 cd backend
 pip install -r requirements.txt
-```
-Buat file `.env` berdasarkan `.env.example` dan isi dengan kredensial BytePlus Anda. Lalu jalankan:
-```bash
+cp .env.example .env # Isi dengan kredensial BytePlus Anda
 python app.py
 ```
 Backend akan berjalan di `http://localhost:5000`.
 
 ### 2. Persiapan Frontend
-Masuk ke direktori frontend dan instal dependensi:
+Instal dependensi dan jalankan aplikasi dari root directory:
 ```bash
-cd frontend
 npm install
-```
-Lalu jalankan aplikasi:
-```bash
 npm run dev
 ```
 Frontend akan berjalan di `http://localhost:8080`.
 
-## 🛡️ Keamanan
-- Semua kunci API dan rahasia harus disimpan di file `.env` (sudah masuk `.gitignore`).
-- Jangan pernah melakukan commit file `.env` ke GitHub.
-- Gunakan `.env.example` sebagai referensi variabel yang dibutuhkan.
+## 🛡️ Keamanan & Privasi
+- **Zero Hardcoded Secrets**: Semua kunci API disimpan di file `.env` yang sudah di-exclude oleh `.gitignore`.
+- **Private Access**: Gambar diakses melalui *Signed URL* berdurasi terbatas untuk keamanan maksimal.
 
-## 📝 Fitur Utama
-- **Audit K3 Otomatis**: Mendeteksi helm, rompi, sepatu safety, dll.
-- **Deteksi Subjek**: Memberitahu jika tidak ada orang dalam gambar.
-- **Status Kepatuhan**: Memberikan penilaian *Compliant* atau *Non-Compliant*.
-- **Penyimpanan Cloud**: Integrasi langsung dengan BytePlus TOS.
+## 📝 Fitur Unggulan
+- **Audit K3 Tanpa Prompt**: Anda hanya perlu upload gambar, sistem secara otomatis menjalankan instruksi audit K3 yang sudah tertanam.
+- **Output JSON Terstruktur**: Selain tampilan visual, sistem menyediakan data mentah JSON untuk kebutuhan integrasi sistem lain.
+- **Analisis Mendalam**: Mengidentifikasi helm, rompi, sepatu safety, dll., serta memberikan status *Compliant* atau *Non-Compliant*.
+- **Deteksi Subjek**: AI akan memberitahu jika tidak ada subjek manusia yang dapat dianalisis dalam gambar.
+
+## 🔗 Integrasi Cloud
+- **BytePlus TOS**: Penyimpanan gambar yang aman dan scalable.
+- **BytePlus Seed LLM**: Mesin AI vision untuk analisis gambar tingkat lanjut.

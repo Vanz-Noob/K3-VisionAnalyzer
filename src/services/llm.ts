@@ -1,4 +1,25 @@
+/// <reference types="vite/client" />
 // LLM analysis service. Sends an image URL + prompt to the analyze endpoint.
+
+export interface PPEItem {
+  name: string;
+  worn: boolean;
+}
+
+export interface IndividualAnalysis {
+  id: number;
+  ppeItems: PPEItem[];
+  compliance: "Compliant" | "Non-Compliant";
+  missingItems: string[];
+  recommendation: string;
+}
+
+export interface K3Analysis {
+  hasSubject: boolean | null;
+  individuals: IndividualAnalysis[];
+  overallCompliance: "Compliant" | "Non-Compliant" | "N/A";
+  summary: string;
+}
 
 export interface AnalyzeRequest {
   imageUrl: string;
@@ -7,9 +28,10 @@ export interface AnalyzeRequest {
 }
 
 export interface AnalyzeResponse {
-  content: string;          // markdown / plain text result
+  content: string;
+  analysis: K3Analysis;
   model?: string;
-  usage?: { inputTokens?: number; outputTokens?: number };
+  usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
 }
 
 const LLM_ENDPOINT =
@@ -31,13 +53,3 @@ export async function analyzeImage(
   }
   return (await res.json()) as AnalyzeResponse;
 }
-
-/* Example payload:
-   { "imageUrl": "https://bucket.tos-region.bytepluses.com/uploads/xyz.png",
-     "prompt": "Describe what you see.",
-     "systemPrompt": "You are a helpful vision assistant." }
-
-   Example response:
-   { "content": "The image shows ...", "model": "vision-pro",
-     "usage": { "inputTokens": 412, "outputTokens": 188 } }
-*/

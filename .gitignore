@@ -30,3 +30,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Project specific
+.env
+.env.local
+backend/temp/
+backend/__pycache__/
+frontend/dist/
+frontend/node_modules/   

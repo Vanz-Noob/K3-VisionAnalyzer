@@ -1,11 +1,27 @@
+/// <reference types="vite/client" />
 import { useCallback, useRef, useState } from "react";
 import { getPresignedUrl, uploadToTOS } from "@/services/tos";
-import { analyzeImage } from "@/services/llm";
+import { analyzeImage, type K3Analysis } from "@/services/llm";
+
+const UPLOAD_COMPLETE_ENDPOINT =
+  import.meta.env.VITE_UPLOAD_COMPLETE_ENDPOINT ?? "/api/tos/upload-complete";
+
+async function notifyUploadComplete(key: string, filename: string) {
+  const res = await fetch(UPLOAD_COMPLETE_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key, filename }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to notify upload complete (${res.status})`);
+  }
+  return await res.json();
+}
 
 export type Stage = "idle" | "uploading" | "analyzing" | "done" | "error";
 
 export const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
-export const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_SIZE = 5 * 1024 * 1024;
 
 export interface ValidationError {
   message: string;
@@ -22,8 +38,10 @@ export function validateFile(file: File): ValidationError | null {
 export interface UseImageAnalysisState {
   stage: Stage;
   uploadProgress: number;
+  key: string | null;
   imageUrl: string | null;
   result: string | null;
+  analysis: K3Analysis | null;
   error: string | null;
 }
 
@@ -31,8 +49,10 @@ export function useImageAnalysis() {
   const [state, setState] = useState<UseImageAnalysisState>({
     stage: "idle",
     uploadProgress: 0,
+    key: null,
     imageUrl: null,
     result: null,
+    analysis: null,
     error: null,
   });
   const abortRef = useRef<AbortController | null>(null);
@@ -42,13 +62,15 @@ export function useImageAnalysis() {
     setState({
       stage: "idle",
       uploadProgress: 0,
+      key: null,
       imageUrl: null,
       result: null,
+      analysis: null,
       error: null,
     });
   }, []);
 
-  const run = useCallback(async (file: File, prompt: string) => {
+  const run = useCallback(async (file: File) => {
     const v = validateFile(file);
     if (v) {
       setState((s) => ({ ...s, stage: "error", error: v.message }));
@@ -58,39 +80,46 @@ export function useImageAnalysis() {
     setState({
       stage: "uploading",
       uploadProgress: 0,
+      key: null,
       imageUrl: null,
       result: null,
+      analysis: null,
       error: null,
     });
 
     try {
-      // 1) Pre-signed URL
-      const { uploadUrl, publicUrl } = await getPresignedUrl({
+      const { uploadUrl, publicUrl, key } = await getPresignedUrl({
         filename: file.name,
         contentType: file.type,
         size: file.size,
       });
 
-      // 2) Upload directly to TOS
-      await uploadToTOS(uploadUrl, file, (pct) =>
+      await uploadToTOS(uploadUrl, file, (pct: number) =>
         setState((s) => ({ ...s, uploadProgress: pct })),
       );
+
+      await notifyUploadComplete(key, file.name);
 
       setState((s) => ({
         ...s,
         stage: "analyzing",
+        key: key,
         imageUrl: publicUrl,
         uploadProgress: 100,
       }));
 
-      // 3) Send URL to LLM
       abortRef.current = new AbortController();
       const res = await analyzeImage(
-        { imageUrl: publicUrl, prompt },
+        { imageUrl: publicUrl, prompt: "" },
         abortRef.current.signal,
       );
 
-      setState((s) => ({ ...s, stage: "done", result: res.content }));
+      setState((s) => ({
+        ...s,
+        stage: "done",
+        result: res.content,
+        analysis: res.analysis ?? null,
+      }));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       setState((s) => ({ ...s, stage: "error", error: message }));

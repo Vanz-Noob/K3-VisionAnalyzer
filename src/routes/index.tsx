@@ -24,18 +24,15 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState(
-    "Jelaskan isi gambar ini secara detail dan ringkas.",
-  );
 
-  const { stage, uploadProgress, result, error, run, reset } = useImageAnalysis();
+  const { stage, uploadProgress, result, analysis, error, run, reset } = useImageAnalysis();
 
   const isWorking = stage === "uploading" || stage === "analyzing";
 
   const handleAnalyze = async () => {
     if (!file) return;
     try {
-      await run(file, prompt);
+      await run(file);
       toast.success("Analisis selesai");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Terjadi kesalahan");
@@ -81,19 +78,6 @@ function Index() {
 
         {file && (
           <div className="space-y-4 rounded-xl border border-border bg-card p-6">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Prompt
-              </label>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                disabled={isWorking}
-                rows={3}
-                className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
-              />
-            </div>
-
             {stage === "uploading" && (
               <div>
                 <div className="mb-1 flex justify-between text-xs text-muted-foreground">
@@ -112,7 +96,7 @@ function Index() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleAnalyze}
-                disabled={isWorking || !prompt.trim()}
+                disabled={isWorking}
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isWorking ? (
@@ -123,7 +107,7 @@ function Index() {
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
-                    Analisis Gambar
+                    Analisis K3
                   </>
                 )}
               </button>
@@ -145,7 +129,7 @@ function Index() {
           </div>
         )}
 
-        <AnalysisResult result={result} loading={stage === "analyzing"} />
+        <AnalysisResult result={result} analysis={analysis} loading={stage === "analyzing"} />
       </main>
     </div>
   );

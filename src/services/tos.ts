@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // BytePlus TOS upload service.
 // Uses pre-signed URL flow: backend issues a PUT URL, frontend uploads directly.
 // All endpoints are placeholders — wire to your real backend.
@@ -6,7 +7,7 @@ export interface PresignedUrlResponse {
   uploadUrl: string;   // PUT URL with signature
   publicUrl: string;   // Public URL after upload completes
   key: string;         // Object key in the bucket
-  expiresAt?: string;
+  expiresAt: string;   // Expiration timestamp
 }
 
 export interface PresignRequest {

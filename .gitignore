@@ -38,3 +38,5 @@ backend/temp/
 backend/__pycache__/
 frontend/dist/
 frontend/node_modules/   
+
+__pycache__
